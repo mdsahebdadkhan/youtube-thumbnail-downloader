@@ -219,6 +219,21 @@
   .variant-actions .save{border:0;background:var(--red);color:#fff}
   .video-note{margin-top:12px;background:var(--amber-bg);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:13.5px;line-height:1.5}
   .video-note strong{font-weight:800}
+  .upfront-download{margin-top:16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .upfront-download button{border:0;border-radius:11px;background:var(--red);color:#fff;font-weight:800;padding:0 20px;min-height:50px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:15px;box-shadow:0 6px 16px rgba(230,33,23,.22)}
+  .upfront-download button svg{width:18px;height:18px}
+  .upfront-download button:disabled{background:var(--surface-3);color:var(--muted);cursor:not-allowed;box-shadow:none}
+  .upfront-download button:not(:disabled):hover{background:var(--red-dark)}
+  .upfront-download span{color:var(--muted);font-size:13.5px;line-height:1.5;flex:1;min-width:200px}
+  .yt-notice{display:none;margin-top:14px;background:var(--red-soft);border:1px solid var(--line-strong);border-radius:14px;padding:16px}
+  .yt-notice.show{display:block}
+  .yt-notice h3{margin:0 0 6px;font-size:16px;line-height:1.3}
+  .yt-notice p{margin:0 0 12px;color:var(--muted);font-size:14px;line-height:1.55}
+  .yt-notice-actions{display:flex;flex-wrap:wrap;gap:9px}
+  .yt-notice-actions button{border-radius:10px;padding:0 16px;min-height:46px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;font-size:14px}
+  .yt-notice-actions .yt-primary{background:var(--red);color:#fff;border:0}
+  .yt-notice-actions .yt-primary:hover{background:var(--red-dark)}
+  .yt-notice-actions .yt-secondary{background:var(--surface);color:var(--text);border:1px solid var(--line-strong)}
 
   footer{margin-top:28px;color:var(--faint);font-size:13px;line-height:1.6;text-align:center}
   .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:#111;color:#fff;padding:12px 16px;border-radius:999px;font-size:14px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:.22s;z-index:50;max-width:calc(100vw - 32px);text-align:center}
@@ -313,6 +328,23 @@
         <button class="ex" data-video-example="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4">Big Buck Bunny (.mp4)</button>
         <button class="ex" data-video-example="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4">Flower clip (.mp4)</button>
         <button class="ex" data-video-example="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4">For Bigger Blazes (.mp4)</button>
+      </div>
+    </div>
+
+    <div class="upfront-download" id="upfrontDownloadBar">
+      <button type="button" id="upfrontDownloadBtn" disabled aria-disabled="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+        Download this video
+      </button>
+      <span id="upfrontDownloadHint">This button is ready to use — paste a direct .mp4, .webm, .mov or .m4v link above and tap <strong>Load video</strong> first. Once the file loads, this button saves it.</span>
+    </div>
+
+    <div class="yt-notice" id="youtubeNotice" role="alert">
+      <h3>That’s a YouTube link — it can’t be downloaded as a video file here</h3>
+      <p id="youtubeNoticeText">YouTube doesn’t provide a direct video file for page links like this, so there’s nothing for the download button to save. You can grab this video’s thumbnails instead, or open it on YouTube — where YouTube itself may offer offline saving.</p>
+      <div class="yt-notice-actions">
+        <button type="button" class="yt-primary" id="ytGetThumbsBtn">Get its thumbnails</button>
+        <button type="button" class="yt-secondary" id="ytOpenBtn">Open on YouTube ↗</button>
       </div>
     </div>
 
@@ -841,6 +873,49 @@
   var currentVideo = null; // {label,url,filename,ext,size}
   var variants = [];
   var activeUrl = null;
+  var upfrontBtn = document.getElementById('upfrontDownloadBtn');
+  var upfrontHint = document.getElementById('upfrontDownloadHint');
+  var ytNotice = document.getElementById('youtubeNotice');
+  var ytThumbsBtn = document.getElementById('ytGetThumbsBtn');
+  var ytOpenBtn = document.getElementById('ytOpenBtn');
+  var pendingYouTube = null; // {id, watchUrl}
+
+  function extractYouTubeId(raw){
+    if(!raw) return null;
+    var s = String(raw).trim();
+    if(/^[a-zA-Z0-9_-]{11}$/.test(s)) return null; // bare ID alone is for the thumbnail tool, handled there
+    var m = s.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/|live\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
+    if(m) return m[1];
+    var m2 = s.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+    if(m2 && /youtube\.com/i.test(s)) return m2[1];
+    if(/youtu\.be\//i.test(s)){
+      var seg = s.split('youtu.be/')[1];
+      if(seg){ seg = seg.split(/[?&#\/]/)[0]; if(/^[a-zA-Z0-9_-]{11}$/.test(seg)) return seg; }
+    }
+    return null;
+  }
+  function isYouTubeLink(raw){ return !!raw && /youtube\.com|youtu\.be/i.test(String(raw)); }
+  function showYouTubeNotice(raw){
+    var id = extractYouTubeId(raw);
+    var watchUrl = id ? ('https://www.youtube.com/watch?v=' + id) : String(raw || '').trim();
+    pendingYouTube = { id: id, watchUrl: watchUrl };
+    ytNotice.classList.add('show');
+    ytNotice.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }
+  function hideYouTubeNotice(){ ytNotice.classList.remove('show'); pendingYouTube = null; }
+  function setUpfrontReady(item){
+    if(!upfrontBtn) return;
+    if(item){
+      upfrontBtn.disabled = false;
+      upfrontBtn.removeAttribute('aria-disabled');
+      upfrontHint.innerHTML = 'Ready — <strong></strong> is loaded. Tap <strong>Download this video</strong> to save it.';
+      upfrontHint.querySelector('strong').textContent = item.filename;
+    } else {
+      upfrontBtn.disabled = true;
+      upfrontBtn.setAttribute('aria-disabled','true');
+      upfrontHint.innerHTML = 'This button is ready to use — paste a direct .mp4, .webm, .mov or .m4v link above and tap <strong>Load video</strong> first. Once the file loads, this button saves it.';
+    }
+  }
 
   function showToast(msg){
     toastEl.textContent = msg;
@@ -858,7 +933,7 @@
     var s = String(raw).trim();
     if(!s) return { error:'Paste a direct video link first — for example https://example.com/my-video.mp4' };
     if(/youtube\.com|youtu\.be/i.test(s)){
-      return { error:'That\u2019s a YouTube page link, not a direct video file. It won\u2019t download as a file here — paste it in the thumbnail tool at the top, or open it on YouTube. For the video tool, paste a link that ends in .mp4, .webm, .mov or .m4v.' };
+      return { youtube:true, error:'That\u2019s a YouTube page link, not a direct video file.' };
     }
     var urlStr = s;
     if(!/^https?:\/\//i.test(urlStr)) urlStr = 'https://' + urlStr;
@@ -988,8 +1063,10 @@
     });
   }
   function loadIntoPlayer(item, scroll){
+    hideYouTubeNotice();
     activeUrl = item.url;
     currentVideo = item;
+    setUpfrontReady(item);
     player.src = item.url;
     fName.textContent = item.filename;
     fFormat.textContent = item.ext.toUpperCase();
@@ -1011,7 +1088,9 @@
   function doVideoFetch(){
     hideVError(); hideVariantError();
     var parsed = parseDirect(vInput.value);
-    if(parsed.error){ showVError(parsed.error); vInput.focus(); return; }
+    if(parsed.youtube){ hideVError(); showYouTubeNotice(vInput.value); return; }
+    if(parsed.error){ hideYouTubeNotice(); showVError(parsed.error); vInput.focus(); return; }
+    hideYouTubeNotice();
     var item = { label:'Original', url:parsed.url, filename:parsed.filename, ext:parsed.ext, size:null };
     variants = [item];
     loadIntoPlayer(item, true);
@@ -1037,16 +1116,36 @@
   vInput.addEventListener('input', function(){
     vClearBtn.style.display = vInput.value ? 'grid' : 'none';
     hideVError();
+    if(!isYouTubeLink(vInput.value)) hideYouTubeNotice();
   });
   vInput.addEventListener('paste', function(){
-    setTimeout(function(){ if(vInput.value && !parseDirect(vInput.value).error) doVideoFetch(); }, 90);
+    setTimeout(function(){
+      if(!vInput.value) return;
+      if(isYouTubeLink(vInput.value)){ showYouTubeNotice(vInput.value); return; }
+      if(!parseDirect(vInput.value).error) doVideoFetch();
+    }, 90);
   });
-  vClearBtn.addEventListener('click', function(){ vInput.value=''; vClearBtn.style.display='none'; hideVError(); vInput.focus(); });
+  vClearBtn.addEventListener('click', function(){ vInput.value=''; vClearBtn.style.display='none'; hideVError(); hideYouTubeNotice(); if(!currentVideo) setUpfrontReady(null); vInput.focus(); });
+  if(upfrontBtn) upfrontBtn.addEventListener('click', function(){ if(currentVideo) downloadVideo(currentVideo); else showToast('Load a direct video file first — then this button saves it'); });
+  ytThumbsBtn.addEventListener('click', function(){
+    if(!pendingYouTube) return;
+    var thumbInput = document.getElementById('urlInput');
+    var thumbBtn = document.getElementById('fetchBtn');
+    if(thumbInput) thumbInput.value = pendingYouTube.watchUrl;
+    hideYouTubeNotice();
+    if(thumbBtn) thumbBtn.click();
+    var tool = document.getElementById('thumbnail-tool');
+    if(tool) tool.scrollIntoView({ behavior:'smooth', block:'start' });
+  });
+  ytOpenBtn.addEventListener('click', function(){
+    if(pendingYouTube && pendingYouTube.watchUrl) window.open(pendingYouTube.watchUrl, '_blank', 'noopener');
+  });
   document.getElementById('videoPasteBtn').addEventListener('click', function(){
     if(!navigator.clipboard || !navigator.clipboard.readText){ showToast('Clipboard paste isn\u2019t available here — long-press the field to paste'); vInput.focus(); return; }
     navigator.clipboard.readText().then(function(text){
       if(!text){ showToast('Clipboard is empty'); return; }
       vInput.value = text.trim(); vClearBtn.style.display='grid';
+      if(isYouTubeLink(vInput.value)){ showYouTubeNotice(vInput.value); return; }
       var p = parseDirect(vInput.value);
       if(!p.error) doVideoFetch(); else showVError(p.error);
     }).catch(function(){ showToast('Couldn\u2019t read clipboard — paste manually with Ctrl/Cmd + V'); vInput.focus(); });
@@ -1064,6 +1163,7 @@
   document.getElementById('addVariantBtn').addEventListener('click', function(){
     hideVariantError();
     var parsed = parseDirect(variantUrl.value);
+    if(parsed.youtube){ showVariantError('That\u2019s a YouTube page link, not a direct video file — add a link that ends in .mp4, .webm, .mov or .m4v.'); return; }
     if(parsed.error){ showVariantError(parsed.error); return; }
     var label = (variantLabel.value || '').trim() || parsed.ext.toUpperCase();
     if(variants.some(function(v){ return v.url === parsed.url; })){ showVariantError('That link is already in the list.'); return; }
