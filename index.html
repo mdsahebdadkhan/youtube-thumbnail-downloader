@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="color-scheme" content="light dark" />
 <link rel="icon" href="data:," />
-<title>YouTube Thumbnail Downloader</title>
+<title>YouTube Thumbnail & Direct Video Downloader</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
   :root{
@@ -165,6 +165,61 @@
   .recent-item img{width:56px;height:32px;object-fit:cover;border-radius:7px;background:#111}
   .recent-item span{font-size:12.5px;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 
+  /* Direct video downloader */
+  .tool-nav{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+  .tool-nav a{text-decoration:none;font-size:13.5px;font-weight:700;border:1px solid var(--line);background:var(--surface);padding:9px 13px;border-radius:999px;display:inline-flex;align-items:center;gap:7px}
+  .tool-nav a.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+  .tool-nav a span{font-size:11px;font-weight:800;letter-spacing:.04em;background:var(--red);color:#fff;padding:3px 6px;border-radius:999px}
+  .video-grabber{margin-top:22px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--shadow)}
+  @media(min-width:720px){.video-grabber{padding:22px}}
+  .video-grabber-head{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;margin-bottom:6px}
+  .video-grabber-head h2{font-size:20px;line-height:1.15;letter-spacing:-.02em;margin:0}
+  .video-grabber-head p{margin:6px 0 14px;color:var(--muted);font-size:14.5px;line-height:1.55;max-width:640px}
+  .new-badge{flex:0 0 auto;background:var(--text);color:var(--bg);font-size:11px;font-weight:800;letter-spacing:.06em;padding:6px 8px;border-radius:999px}
+  .video-grabber label{font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:10px}
+  .cta-dark{border:0;border-radius:12px;background:var(--text);color:var(--bg);font-weight:700;padding:0 22px;min-height:56px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
+  .cta-dark svg{width:18px;height:18px}
+  #videoResults{display:none;margin-top:18px;border-top:1px dashed var(--line);padding-top:18px}
+  #videoResults.show{display:block}
+  .player-wrap{background:#000;border-radius:16px;overflow:hidden;aspect-ratio:16/9;max-height:520px}
+  .player-wrap video{width:100%;height:100%;display:block;background:#000}
+  .file-head{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;justify-content:space-between;margin-top:14px}
+  .file-head h3{margin:0;font-size:17px;line-height:1.3;word-break:break-word;flex:1;min-width:200px}
+  .format-pill{flex:0 0 auto;background:var(--surface-2);border:1px solid var(--line-strong);font-size:12px;font-weight:800;letter-spacing:.05em;padding:6px 9px;border-radius:999px;text-transform:uppercase}
+  .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px}
+  @media(min-width:720px){.stat-grid{grid-template-columns:repeat(4,1fr)}}
+  .stat{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:11px 12px}
+  .stat span{display:block;font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);margin-bottom:4px}
+  .stat b{font-size:14.5px;line-height:1.3;word-break:break-word}
+  .source-url{margin-top:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--muted);word-break:break-all;background:var(--surface-2);border:1px solid var(--line);padding:9px 10px;border-radius:9px}
+  .progress-wrap{display:none;margin-top:14px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:12px}
+  .progress-wrap.show{display:block}
+  .progress-top{display:flex;justify-content:space-between;gap:12px;font-size:13.5px;font-weight:700;margin-bottom:8px}
+  .progress-top span:last-child{color:var(--muted);font-weight:600}
+  .progress-track{height:9px;background:var(--surface-3);border-radius:999px;overflow:hidden}
+  .progress-bar{height:100%;width:0%;background:var(--red);border-radius:999px;transition:width .18s ease}
+  .variants{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+  .variants h4{margin:0 0 6px;font-size:15px}
+  .variants>p{margin:0 0 12px;color:var(--muted);font-size:13.5px;line-height:1.5}
+  .variant-form{display:grid;grid-template-columns:1fr;gap:8px}
+  @media(min-width:720px){.variant-form{grid-template-columns:130px 1fr auto}}
+  .variant-form input{border:1.5px solid var(--line);background:var(--surface-2);border-radius:10px;padding:0 12px;min-height:46px;outline:none;color:var(--text);min-width:0}
+  .variant-form input:focus{border-color:var(--text);background:var(--surface)}
+  .variant-form button{border:1px solid var(--line-strong);background:var(--surface);border-radius:10px;padding:0 16px;font-weight:700;cursor:pointer}
+  .variant-list{display:flex;flex-direction:column;gap:9px;margin-top:12px}
+  .variant-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:10px 11px}
+  .variant-row.active{border-color:var(--text)}
+  .variant-info{min-width:0;flex:1}
+  .variant-info b{font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .variant-info b em{font-style:normal;font-size:11px;background:var(--text);color:var(--bg);padding:3px 6px;border-radius:999px;letter-spacing:.04em}
+  .variant-info span{display:block;color:var(--muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:520px;margin-top:2px}
+  .variant-actions{display:flex;gap:7px;flex-wrap:wrap}
+  .variant-actions button{border-radius:9px;padding:8px 11px;min-height:38px;font-size:13px;font-weight:700;cursor:pointer}
+  .variant-actions .play{border:1px solid var(--line-strong);background:var(--surface);color:var(--text)}
+  .variant-actions .save{border:0;background:var(--red);color:#fff}
+  .video-note{margin-top:12px;background:var(--amber-bg);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:13.5px;line-height:1.5}
+  .video-note strong{font-weight:800}
+
   footer{margin-top:28px;color:var(--faint);font-size:13px;line-height:1.6;text-align:center}
   .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:#111;color:#fff;padding:12px 16px;border-radius:999px;font-size:14px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:.22s;z-index:50;max-width:calc(100vw - 32px);text-align:center}
   @media (prefers-color-scheme: dark){.toast{background:#f1f1f1;color:#111}}
@@ -180,12 +235,17 @@
   <div class="intro">
     <div class="play-badge" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5-11-6.5z"/></svg></div>
     <div>
-      <h1>Grab any YouTube thumbnail in full quality</h1>
-      <p>Paste a video link below and get the <strong>HD, SD and preview sizes</strong> instantly — no sign-up, no watermark. Works with watch links, Shorts, live, embeds and <strong>youtu.be</strong> short links.</p>
+      <h1>Grab thumbnails &amp; download direct videos</h1>
+      <p>Paste a YouTube link for <strong>HD, SD and preview thumbnails</strong>, or scroll to the new video tool to download a <strong>direct .mp4 / .webm / .mov file</strong> you own. No sign-up, no watermark.</p>
     </div>
   </div>
 
-  <section class="grabber" aria-label="Thumbnail grabber">
+  <nav class="tool-nav" aria-label="Tools on this page">
+    <a href="#thumbnail-tool" class="active">YouTube thumbnails</a>
+    <a href="#video-downloader">Direct video downloader <span>NEW</span></a>
+  </nav>
+
+  <section class="grabber" id="thumbnail-tool" aria-label="Thumbnail grabber">
     <label for="urlInput">YouTube video URL or video ID</label>
     <div class="input-row">
       <div class="field">
@@ -217,6 +277,82 @@
     <div class="recent" id="recentBox">
       <h4>Recently fetched in this session</h4>
       <div class="recent-list" id="recentList"></div>
+    </div>
+  </section>
+
+  <section class="video-grabber" id="video-downloader" aria-label="Direct-link video downloader">
+    <div class="video-grabber-head">
+      <div>
+        <h2>Direct-link video downloader</h2>
+        <p>Have a direct file link — from your own hosting, Drive export, CDN, or a site that gives you a file URL? Paste it here to preview it and download the actual video file. This works for direct files only, not YouTube page links.</p>
+      </div>
+      <span class="new-badge">NEW</span>
+    </div>
+    <label for="videoUrlInput">Direct video file URL (.mp4, .webm, .mov, .m4v)</label>
+    <div class="input-row">
+      <div class="field">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m10 13 5 3-5 3v-6z"/></svg>
+        <input id="videoUrlInput" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="https://example.com/my-video.mp4" />
+        <button class="icon-btn" id="videoClearBtn" title="Clear" aria-label="Clear video input" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <button class="cta-dark" id="videoFetchBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3" fill="currentColor" stroke="none"/></svg>
+        Load video
+      </button>
+    </div>
+    <div class="sub-actions">
+      <button class="chip-btn" id="videoPasteBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> Paste from clipboard</button>
+      <span class="hint">Press Enter to load • Link should end in .mp4, .webm, .mov or .m4v</span>
+    </div>
+    <div class="error" id="videoErrorBox" role="alert"></div>
+    <div class="examples">
+      <span>Try a sample direct file</span>
+      <div class="ex-list">
+        <button class="ex" data-video-example="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4">Big Buck Bunny (.mp4)</button>
+        <button class="ex" data-video-example="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4">Flower clip (.mp4)</button>
+        <button class="ex" data-video-example="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4">For Bigger Blazes (.mp4)</button>
+      </div>
+    </div>
+
+    <div id="videoResults" aria-live="polite">
+      <div class="player-wrap">
+        <video id="directPlayer" controls playsinline preload="metadata"></video>
+      </div>
+      <div class="file-head">
+        <h3 id="directFilename">video.mp4</h3>
+        <span class="format-pill" id="directFormat">MP4</span>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><span>File size</span><b id="directSize">Checking…</b></div>
+        <div class="stat"><span>Resolution</span><b id="directRes">—</b></div>
+        <div class="stat"><span>Duration</span><b id="directDuration">—</b></div>
+        <div class="stat"><span>Host</span><b id="directHost">—</b></div>
+      </div>
+      <div class="source-url" id="directSource"></div>
+      <div class="progress-wrap" id="downloadProgressWrap">
+        <div class="progress-top"><span id="downloadProgressLabel">Downloading…</span><span id="downloadProgressPct">0%</span></div>
+        <div class="progress-track"><div class="progress-bar" id="downloadProgressBar"></div></div>
+      </div>
+      <div class="bulk">
+        <button class="primary" id="directDownloadBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg> Download this video</button>
+        <button class="secondary" id="directCopyBtn">Copy file link</button>
+        <button class="secondary" id="directOpenBtn">Open file link</button>
+      </div>
+      <div class="video-note" id="directNote" style="display:none"></div>
+
+      <div class="variants">
+        <h4>Other qualities / versions</h4>
+        <p>If the same video is hosted at other resolutions, add those direct links here — for example a 720p or 480p file — and download or preview each one. Qualities come from links you add; they aren’t generated from the first file.</p>
+        <div class="variant-form">
+          <input id="variantLabel" type="text" placeholder="Label — e.g. 720p" maxlength="24" />
+          <input id="variantUrl" type="url" inputmode="url" placeholder="https://example.com/video-720p.mp4" />
+          <button id="addVariantBtn" type="button">Add quality</button>
+        </div>
+        <div class="error" id="variantErrorBox" role="alert"></div>
+        <div class="variant-list" id="variantList"></div>
+      </div>
     </div>
   </section>
 
@@ -276,9 +412,16 @@
       <p><strong style="color:var(--text)">HQ (480×360)</strong> — always available, even on older videos. Good for embeds and docs.</p>
       <p style="margin-bottom:0"><strong style="color:var(--text)">MQ (320×180)</strong> — small previews and lists where file size matters more than detail.</p>
     </div>
+    <div class="panel" style="grid-column:1/-1">
+      <h3>Direct video downloads</h3>
+      <p>Paste a link that points straight to a video file — it should end in <strong style="color:var(--text)">.mp4, .webm, .mov or .m4v</strong>. The player previews it, then Download saves that exact file.</p>
+      <p>A YouTube watch / Shorts page link isn’t a direct file, so it won’t work in the video tool — use it in the thumbnail tool above, or open it on YouTube for offline saving where YouTube offers it.</p>
+      <p style="margin-bottom:0">If a server blocks in-page downloading, the tool opens the file so you can save it from there.</p>
+      <div class="formats"><code>.mp4</code><code>.webm</code><code>.mov</code><code>.m4v</code></div>
+    </div>
   </div>
 
-  <footer>Thumbnails belong to their respective creators and YouTube. Only download and reuse a thumbnail where you have the rights or permission to do so.<br>This tool fetches images directly from YouTube's public image servers — no video data is stored here.</footer>
+  <footer>Thumbnails belong to their respective creators and YouTube, and videos belong to their owners. Only download and reuse a thumbnail or video where you have the rights or permission to do so.<br>Thumbnails load from YouTube's public image servers and direct videos load from the link you paste — nothing is stored here.</footer>
 </div>
 
 <div class="toast" id="toast" role="status"></div>
@@ -665,6 +808,272 @@
       btn.disabled = false; btn.innerHTML = old;
     });
   });
+})();
+</script>
+<script>
+(function(){
+  var VIDEO_EXTS = ['mp4','webm','mov','m4v','mkv','ogg'];
+  var PLAYABLE = ['mp4','webm','mov','m4v','ogg'];
+  var vInput = document.getElementById('videoUrlInput');
+  var vFetchBtn = document.getElementById('videoFetchBtn');
+  var vClearBtn = document.getElementById('videoClearBtn');
+  var vError = document.getElementById('videoErrorBox');
+  var vResults = document.getElementById('videoResults');
+  var player = document.getElementById('directPlayer');
+  var fName = document.getElementById('directFilename');
+  var fFormat = document.getElementById('directFormat');
+  var fSize = document.getElementById('directSize');
+  var fRes = document.getElementById('directRes');
+  var fDur = document.getElementById('directDuration');
+  var fHost = document.getElementById('directHost');
+  var fSource = document.getElementById('directSource');
+  var fNote = document.getElementById('directNote');
+  var toastEl = document.getElementById('toast');
+  var progWrap = document.getElementById('downloadProgressWrap');
+  var progBar = document.getElementById('downloadProgressBar');
+  var progPct = document.getElementById('downloadProgressPct');
+  var progLabel = document.getElementById('downloadProgressLabel');
+  var variantLabel = document.getElementById('variantLabel');
+  var variantUrl = document.getElementById('variantUrl');
+  var variantError = document.getElementById('variantErrorBox');
+  var variantList = document.getElementById('variantList');
+  var toastTimer = null;
+  var currentVideo = null; // {label,url,filename,ext,size}
+  var variants = [];
+  var activeUrl = null;
+
+  function showToast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 2800);
+  }
+  function showVError(msg){ vError.textContent = msg; vError.classList.add('show'); }
+  function hideVError(){ vError.classList.remove('show'); }
+  function showVariantError(msg){ variantError.textContent = msg; variantError.classList.add('show'); }
+  function hideVariantError(){ variantError.classList.remove('show'); }
+
+  function parseDirect(raw){
+    if(!raw) return { error:'Paste a direct video link first — for example https://example.com/my-video.mp4' };
+    var s = String(raw).trim();
+    if(!s) return { error:'Paste a direct video link first — for example https://example.com/my-video.mp4' };
+    if(/youtube\.com|youtu\.be/i.test(s)){
+      return { error:'That\u2019s a YouTube page link, not a direct video file. It won\u2019t download as a file here — paste it in the thumbnail tool at the top, or open it on YouTube. For the video tool, paste a link that ends in .mp4, .webm, .mov or .m4v.' };
+    }
+    var urlStr = s;
+    if(!/^https?:\/\//i.test(urlStr)) urlStr = 'https://' + urlStr;
+    var u;
+    try{ u = new URL(urlStr); }catch(e){ return { error:'That doesn\u2019t look like a valid link. Check it starts with https:// and points straight to a video file.' }; }
+    if(u.protocol !== 'http:' && u.protocol !== 'https:') return { error:'Only http:// and https:// direct links are supported.' };
+    var path = u.pathname || '';
+    var last = path.split('/').filter(Boolean).pop() || '';
+    var decoded = last;
+    try{ decoded = decodeURIComponent(last); }catch(e){}
+    var m = decoded.match(/\.([a-z0-9]+)$/i);
+    var ext = m ? m[1].toLowerCase() : '';
+    if(!ext || VIDEO_EXTS.indexOf(ext) === -1){
+      return { error:'That link doesn\u2019t end in a video file (.mp4, .webm, .mov, .m4v). Direct download needs the actual file link — a web page link won\u2019t work. Open the page, right-click the video / download button, and copy the file link instead.' };
+    }
+    var filename = decoded || ('video.' + ext);
+    return { url: u.href, filename: filename, ext: ext, host: u.hostname };
+  }
+  function formatBytes(n){
+    if(n == null || isNaN(n) || n <= 0) return 'Unknown';
+    var units = ['B','KB','MB','GB'];
+    var i = 0; var v = n;
+    while(v >= 1024 && i < units.length - 1){ v /= 1024; i++; }
+    return (i === 0 ? v.toFixed(0) : v.toFixed(v >= 100 ? 0 : 1)) + ' ' + units[i];
+  }
+  function formatDuration(sec){
+    if(!sec || isNaN(sec) || !isFinite(sec)) return '—';
+    sec = Math.round(sec);
+    var h = Math.floor(sec/3600), mm = Math.floor((sec%3600)/60), ss = sec%60;
+    if(h) return h + ':' + String(mm).padStart(2,'0') + ':' + String(ss).padStart(2,'0');
+    return mm + ':' + String(ss).padStart(2,'0');
+  }
+  function copyText(text, msg){
+    function done(){ showToast(msg || 'Copied to clipboard'); }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done).catch(function(){ fallback(); });
+    } else fallback();
+    function fallback(){
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); done(); }catch(e){ showToast('Copy failed — long-press the link to copy'); }
+      document.body.removeChild(ta);
+    }
+  }
+  function setProgress(pct, label){
+    progWrap.classList.add('show');
+    var p = Math.max(0, Math.min(100, Math.round(pct)));
+    progBar.style.width = p + '%';
+    progPct.textContent = p + '%';
+    if(label) progLabel.textContent = label;
+  }
+  function hideProgressSoon(){
+    setTimeout(function(){ progWrap.classList.remove('show'); progBar.style.width='0%'; }, 1200);
+  }
+  function triggerBlobDownload(blob, filename){
+    var obj = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = obj; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(obj); }, 5000);
+  }
+  function downloadVideo(item){
+    if(!item) return;
+    showToast('Preparing download…');
+    progWrap.classList.add('show'); progBar.style.width='0%'; progPct.textContent='Starting…'; progLabel.textContent='Downloading ' + item.filename;
+    fetch(item.url, { mode:'cors' }).then(function(r){
+      if(!r.ok) throw new Error('bad');
+      var total = parseInt(r.headers.get('content-length') || '0', 10) || item.size || 0;
+      if(!r.body || !r.body.getReader){
+        return r.blob().then(function(b){ setProgress(100,'Download ready'); triggerBlobDownload(b, item.filename); });
+      }
+      var reader = r.body.getReader();
+      var received = 0; var chunks = [];
+      function pump(){
+        return reader.read().then(function(res){
+          if(res.done){
+            var blob = new Blob(chunks, { type: r.headers.get('content-type') || 'video/mp4' });
+            setProgress(100,'Download ready');
+            triggerBlobDownload(blob, item.filename);
+            showToast('Downloading ' + item.filename);
+            hideProgressSoon();
+            return;
+          }
+          chunks.push(res.value); received += res.value.length;
+          if(total) setProgress((received/total)*100, 'Downloading ' + item.filename + ' — ' + formatBytes(received) + ' of ' + formatBytes(total));
+          else { progPct.textContent = formatBytes(received); progBar.style.width='45%'; progLabel.textContent='Downloading ' + item.filename + ' — ' + formatBytes(received); }
+          return pump();
+        });
+      }
+      return pump();
+    }).catch(function(){
+      // CORS / server fallback: let the browser download / open the file directly
+      progWrap.classList.remove('show');
+      var a = document.createElement('a');
+      a.href = item.url; a.download = item.filename; a.target='_blank'; a.rel='noopener';
+      document.body.appendChild(a); a.click(); a.remove();
+      showToast('Opened the file link — use Download / Save in the new tab if it plays instead of saving');
+    });
+  }
+  function probeSize(item){
+    // Best-effort HEAD; many hosts block it, so failure just leaves size unknown
+    fetch(item.url, { method:'HEAD', mode:'cors' }).then(function(r){
+      var len = parseInt(r.headers.get('content-length') || '0', 10);
+      if(len){ item.size = len; if(activeUrl === item.url) fSize.textContent = formatBytes(len); renderVariants(); }
+    }).catch(function(){});
+  }
+  function renderVariants(){
+    variantList.innerHTML = '';
+    variants.forEach(function(v){
+      var row = document.createElement('div');
+      row.className = 'variant-row' + (activeUrl === v.url ? ' active' : '');
+      var info = document.createElement('div'); info.className='variant-info';
+      var b = document.createElement('b');
+      b.textContent = v.label;
+      if(activeUrl === v.url){ var em = document.createElement('em'); em.textContent='PLAYING'; b.appendChild(em); }
+      var span = document.createElement('span'); span.textContent = v.filename + (v.size ? ' • ' + formatBytes(v.size) : '') + ' • ' + v.url;
+      info.appendChild(b); info.appendChild(span);
+      var actions = document.createElement('div'); actions.className='variant-actions';
+      var playBtn = document.createElement('button'); playBtn.type='button'; playBtn.className='play'; playBtn.textContent='Preview';
+      playBtn.addEventListener('click', function(){ loadIntoPlayer(v, false); });
+      var saveBtn = document.createElement('button'); saveBtn.type='button'; saveBtn.className='save'; saveBtn.textContent='Download';
+      saveBtn.addEventListener('click', function(){ downloadVideo(v); });
+      actions.appendChild(playBtn); actions.appendChild(saveBtn);
+      row.appendChild(info); row.appendChild(actions);
+      variantList.appendChild(row);
+    });
+  }
+  function loadIntoPlayer(item, scroll){
+    activeUrl = item.url;
+    currentVideo = item;
+    player.src = item.url;
+    fName.textContent = item.filename;
+    fFormat.textContent = item.ext.toUpperCase();
+    fSize.textContent = item.size ? formatBytes(item.size) : 'Checking…';
+    fRes.textContent = '—'; fDur.textContent = '—';
+    try{ fHost.textContent = new URL(item.url).hostname; }catch(e){ fHost.textContent='—'; }
+    fSource.textContent = item.url;
+    if(PLAYABLE.indexOf(item.ext) === -1){
+      fNote.style.display='block';
+      fNote.innerHTML = '<strong>Preview may not play:</strong> .' + item.ext + ' files often don\u2019t play in browsers, but Download below should still save the file.';
+    } else {
+      fNote.style.display='none'; fNote.textContent='';
+    }
+    vResults.classList.add('show');
+    renderVariants();
+    probeSize(item);
+    if(scroll) vResults.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }
+  function doVideoFetch(){
+    hideVError(); hideVariantError();
+    var parsed = parseDirect(vInput.value);
+    if(parsed.error){ showVError(parsed.error); vInput.focus(); return; }
+    var item = { label:'Original', url:parsed.url, filename:parsed.filename, ext:parsed.ext, size:null };
+    variants = [item];
+    loadIntoPlayer(item, true);
+    showToast('Video loaded — press play to preview, or Download to save it');
+  }
+
+  player.addEventListener('loadedmetadata', function(){
+    if(player.videoWidth && player.videoHeight) fRes.textContent = player.videoWidth + ' × ' + player.videoHeight;
+    fDur.textContent = formatDuration(player.duration);
+    // If we still don't know size and duration is known, keep Checking -> Unknown after a beat
+    if(fSize.textContent === 'Checking…'){
+      setTimeout(function(){ if(fSize.textContent === 'Checking…') fSize.textContent = 'Unknown — host didn\u2019t share it'; }, 2500);
+    }
+  });
+  player.addEventListener('error', function(){
+    if(!activeUrl) return;
+    fNote.style.display='block';
+    fNote.innerHTML = '<strong>Preview couldn\u2019t load.</strong> The host may block in-page playback or the link may have expired. Download may still work — try it below, or Open file link.';
+  });
+
+  vFetchBtn.addEventListener('click', doVideoFetch);
+  vInput.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); doVideoFetch(); } });
+  vInput.addEventListener('input', function(){
+    vClearBtn.style.display = vInput.value ? 'grid' : 'none';
+    hideVError();
+  });
+  vInput.addEventListener('paste', function(){
+    setTimeout(function(){ if(vInput.value && !parseDirect(vInput.value).error) doVideoFetch(); }, 90);
+  });
+  vClearBtn.addEventListener('click', function(){ vInput.value=''; vClearBtn.style.display='none'; hideVError(); vInput.focus(); });
+  document.getElementById('videoPasteBtn').addEventListener('click', function(){
+    if(!navigator.clipboard || !navigator.clipboard.readText){ showToast('Clipboard paste isn\u2019t available here — long-press the field to paste'); vInput.focus(); return; }
+    navigator.clipboard.readText().then(function(text){
+      if(!text){ showToast('Clipboard is empty'); return; }
+      vInput.value = text.trim(); vClearBtn.style.display='grid';
+      var p = parseDirect(vInput.value);
+      if(!p.error) doVideoFetch(); else showVError(p.error);
+    }).catch(function(){ showToast('Couldn\u2019t read clipboard — paste manually with Ctrl/Cmd + V'); vInput.focus(); });
+  });
+  document.querySelectorAll('[data-video-example]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      vInput.value = btn.getAttribute('data-video-example');
+      vClearBtn.style.display='grid';
+      doVideoFetch();
+    });
+  });
+  document.getElementById('directDownloadBtn').addEventListener('click', function(){ if(currentVideo) downloadVideo(currentVideo); });
+  document.getElementById('directCopyBtn').addEventListener('click', function(){ if(activeUrl) copyText(activeUrl, 'Video file link copied'); });
+  document.getElementById('directOpenBtn').addEventListener('click', function(){ if(activeUrl) window.open(activeUrl, '_blank', 'noopener'); });
+  document.getElementById('addVariantBtn').addEventListener('click', function(){
+    hideVariantError();
+    var parsed = parseDirect(variantUrl.value);
+    if(parsed.error){ showVariantError(parsed.error); return; }
+    var label = (variantLabel.value || '').trim() || parsed.ext.toUpperCase();
+    if(variants.some(function(v){ return v.url === parsed.url; })){ showVariantError('That link is already in the list.'); return; }
+    var item = { label:label, url:parsed.url, filename:parsed.filename, ext:parsed.ext, size:null };
+    variants.push(item);
+    variantLabel.value=''; variantUrl.value='';
+    renderVariants(); probeSize(item);
+    showToast('Added ' + label + ' — tap Download on its row to save it');
+  });
+  variantUrl.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); document.getElementById('addVariantBtn').click(); } });
 })();
 </script>
 </body>
